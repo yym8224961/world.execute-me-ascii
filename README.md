@@ -33,6 +33,32 @@ python3 world-execute-mv.pyz --start 158.7 --autoplay
 
 内嵌音乐是随程序封装的资源，不是加密或 DRM。播放时会解包到当前用户的临时目录，正常退出后清理；不会读取旧电脑 Downloads 中的文件。运行过程无需联网。
 
+## 在 Windows 上运行
+
+Windows 10/11 版复用同一套渲染代码（`player.py` + `scenes.py`），只替换平台层：终端控制走 Win32 控制台 API，音频交给系统自带的 MCI/waveOut 播放（MP3 先由 ffmpeg 解码成临时 WAV，避免 DirectShow 把声音送到显示器）。不需要 Swift 音频组件，也不依赖第三方 Python 库。
+
+需要 **Windows 10 1809+ / Windows 11、Python 3.9+**，推荐使用 Windows Terminal（F11 全屏）。建议安装 ffmpeg（`winget install Gyan.FFmpeg`），否则个别机器可能出现画面正常但没有声音的情况。
+
+从 **Releases** 下载 `world-execute-mv-windows.zip` 并解压，双击 `run.cmd`，或在解压目录执行：
+
+```bat
+python world-execute-mv-win.pyz
+```
+
+从 2:38.7 开始直接播放：
+
+```bat
+python world-execute-mv-win.pyz --start 158.7 --autoplay
+```
+
+也可以直接从源码运行：
+
+```bat
+python player_win.py
+```
+
+没有声音输出设备时加 `--silent`，用系统时钟驱动画面。字体、全屏、按键和与 macOS 版的差异见 [README-Windows.md](README-Windows.md)。
+
 ## 操作
 
 | 按键 | 功能 |
@@ -74,6 +100,16 @@ python3 tests/test_bundle.py
 - `world-execute-mv.pyz`：内嵌音乐的单文件播放器。
 - `world-execute-mv-macos.zip`：包含播放器、启动器、说明的分发包。
 - `SHA256SUMS.txt`：下载校验值。
+
+Windows 单文件包（已有 macOS 包时直接复用其中的音乐与画面资源，保证两版内容一致）：
+
+```bat
+python tools/build_win_bundle.py
+python -m unittest tests.test_win_bundle
+```
+
+输出 `dist/world-execute-mv-win.pyz`、`dist/world-execute-mv-windows.zip` 和
+`dist/SHA256SUMS-win.txt`。
 
 音频以 macOS 音频时钟驱动画面；暂停、跳转时字幕与动画跟随音频时间。构建会生成 universal 音频组件，并在单文件包内记录各资源 SHA-256 以检查完整性。
 
